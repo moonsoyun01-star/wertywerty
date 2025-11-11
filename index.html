@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>간호, 인간을 넘어 환경까지 — 의료폐기물 AI 분류 체험</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --mint: #0a806d;
+    --mint-soft: #aeead6;
+    --bg: #ffffff;
+    --muted: #6b6b6b;
+    --accent: #2edda9;
+    --danger: #e05b5b;
+    --card-shadow: 0 8px 30px rgba(10,128,109,0.06);
+    --radius: 12px;
+    --maxw: 1100px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family:'Noto Sans KR',system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+    background: linear-gradient(180deg, #f7fffb 0%, #ffffff 100%);
+    color: #053532;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    line-height:1.5;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Container */
+  .wrap{max-width:var(--maxw);margin:24px auto;padding:0 18px}
+
+  /* Header / Hero */
+  header.site-header{
+    background:var(--mint);
+    color:#fff;
+    padding:28px 18px;
+    border-radius:16px;
+    text-align:center;
+    box-shadow:0 6px 20px rgba(10,128,109,0.12);
+    position:relative;
+    overflow:hidden;
+  }
+  /* subtle wave graphic */
+  header.site-header::after{
+    content:"";
+    position:absolute;
+    right:-120px; top:-40px;
+    width:420px;height:420px;
+    background: radial-gradient(circle at 40% 40%, rgba(255,255,255,0.08), transparent 25%),
+                linear-gradient(180deg, rgba(255,255,255,0.03), transparent 60%);
+    transform: rotate(18deg);
+    opacity:0.9;
+  }
+  header h1{margin:0;font-weight:900;font-size:20px;letter-spacing:-0.2px}
+  header p{margin:8px 0 0;font-weight:400;opacity:0.95}
+
+  /* main hero card */
+  .hero{
+    display:flex;gap:18px;align-items:center;background:#fff;border-radius:var(--radius);padding:20px;margin-top:18px;box-shadow:var(--card-shadow);
+  }
+  .hero-left{flex:1}
+  .hero-left h2{margin:0;color:var(--mint);font-size:20px;font-weight:800}
+  .hero-left p.lead{margin:10px 0 0;color:var(--muted)}
+  .hero-right{
+    width:140px;height:120px;border-radius:12px;background:linear-gradient(180deg,var(--mint-soft),#e6fff7);display:flex;align-items:center;justify-content:center;font-size:36px;
+    box-shadow:inset 0 -6px 14px rgba(10,128,109,0.02);
+  }
+
+  /* stats */
+  .stats{display:flex;gap:12px;margin-top:14px}
+  .stat{flex:1;background:#fbfffd;padding:12px;border-radius:10px;border:1px solid #e7f8f0;text-align:center}
+  .stat .num{font-size:20px;color:var(--mint);font-weight:800}
+  .stat .label{font-size:12px;color:var(--muted);margin-top:6px}
+
+  /* card sections */
+  section.card{margin-top:18px;background:#fff;padding:18px;border-radius:14px;box-shadow:var(--card-shadow)}
+  section.card h3{margin:0 0 8px 0;color:var(--mint);font-size:17px}
+  section.card p{margin:0;color:var(--muted);line-height:1.6}
+
+  /* flow */
+  .flow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+  .flow .step{flex:1;min-width:140px;background:#f6fffb;border-radius:10px;padding:12px;border:1px solid #eaf9f2;text-align:center}
+  .flow small{display:block;color:#057a62;margin-top:8px;font-size:12px}
+
+  /* interactive area */
+  .interaction{display:flex;gap:18px;align-items:flex-start;margin-top:12px;flex-wrap:wrap}
+  .panel{background:#fbfffd;padding:12px;border-radius:12px;border:1px dashed #e6f6ee;flex:1;min-width:240px}
+  .items{display:flex;flex-wrap:wrap;gap:10px}
+  .card-item{width:82px;height:82px;border-radius:10px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:28px;cursor:grab;border:1px solid #eef9f4;box-shadow:0 4px 10px rgba(6,39,36,0.03)}
+  .card-item .label{font-size:12px;color:var(--muted);margin-top:6px}
+  .dropzone{min-height:140px;border-radius:10px;padding:12px;background:linear-gradient(180deg,#ffffff,#f3fffb);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:8px;border:2px dashed #dff5ec}
+  .dropzone .title{font-weight:800;color:var(--mint)}
+  .dropzone .hint{font-size:12px;color:var(--muted)}
+  .dropzone .counter{font-weight:700;color:var(--mint);margin-top:8px}
+
+  .controls{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
+  button.btn{background:var(--mint);color:#fff;padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:800}
+  button.ghost{background:#fff;border:1px solid #cfeee3;color:var(--mint)}
+  .result{margin-top:12px;padding:10px;border-radius:8px;background:#f6fffa;border:1px solid #dff5ec;color:#0b3a36;display:none}
+
+  /* CTA */
+  .cta{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:16px;border-radius:12px;margin-top:18px;background:linear-gradient(90deg,#f1fffb,#ffffff);border:1px solid #eaf9f2}
+  .cta .text{flex:1}
+  .cta h4{margin:0;color:var(--mint)}
+  .cta p{margin:8px 0 0;color:var(--muted)}
+  .cta button{min-width:180px}
+
+  /* modal */
+  .modal{position:fixed;left:0;top:0;width:100%;height:100%;display:none;align-items:center;justify-content:center;background:rgba(5,10,8,0.45);z-index:50}
+  .modal .dialog{background:#fff;padding:18px;border-radius:12px;max-width:520px;width:92%}
+  .close{background:#eee;border:none;padding:8px 10px;border-radius:8px;cursor:pointer}
+
+  /* small screens */
+  @media (max-width:820px){
+    .hero{flex-direction:column}
+    .stats{flex-direction:column}
+    .interaction{flex-direction:column}
+    .cta{flex-direction:column;align-items:flex-start}
+  }
+  /* accessibility focus */
+  .card-item:focus{outline:3px solid rgba(46,221,169,0.16)}
+  button:focus{outline:3px solid rgba(10,128,109,0.16)}
+</style>
+</head>
+<body>
+  <div class="wrap">
+
+    <!-- HEADER -->
+    <header class="site-header" role="banner" aria-label="메인 헤더">
+      <h1>간호, 인간을 넘어 환경까지</h1>
+      <p>건강한 지구를 위해 간호학이 움직입니다</p>
+    </header>
+
+    <!-- HERO -->
+    <div class="hero" role="region" aria-label="프로젝트 소개">
+      <div class="hero-left">
+        <h2>의료폐기물, 안전하게 분리하고 환경으로 되돌리다</h2>
+        <p class="lead">마스크, 주사기, IV백 등 병원에서 발생하는 일회용 의료폐기물은 감염 위험 때문에 일반 쓰레기와 분리되어 처리됩니다. 본 시스템은 AI를 활용해 안전 기준을 지키면서 재활용 가능한 자원을 분리하는 것을 목표로 합니다.</p>
+
+        <div class="stats" aria-hidden="false">
+          <div class="stat" aria-label="예상 재활용 가능 비율">
+            <div class="num" id="stat1">0</div>
+            <div class="label">예상 재활용 가능 비율(%)</div>
+          </div>
+          <div class="stat" aria-label="감염성 폐기물 감소">
+            <div class="num" id="stat2">0</div>
+            <div class="label">감염성 폐기물 감소(ton/년)</div>
+          </div>
+          <div class="stat" aria-label="추정 소각량 감소">
+            <div class="num" id="stat3">0</div>
+            <div class="label">추정 소각량 감소(%)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-right" aria-hidden="true">🩺🌿</div>
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="card" id="problem" role="article" aria-labelledby="problem-title">
+      <h3 id="problem-title">의료폐기물, 지구의 또 다른 환자</h3>
+      <p>
+        병원에서 사용되는 일회용품이 늘어나고 있습니다. 마스크, 주사기, 수액 세트, 장갑 등은 대부분 플라스틱이며 감염 위험 때문에 쉽게 재활용되지 못합니다.
+        이들은 소각되어 대기 오염을 일으키고, 매립 시 토양과 수질 오염의 원인이 됩니다.
+      </p>
+
+      <!-- decorative flow / image suggestion -->
+      <div style="margin-top:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <div style="flex:1;min-width:220px">
+          <div style="background:linear-gradient(180deg,#fff,#f7fffb);padding:10px;border-radius:10px;border:1px solid #eaf9f2">
+            <strong>디자인 요소</strong>
+            <ul style="margin:8px 0 0 18px;color:var(--muted)">
+              <li>의료폐기물 증가 그래프 애니메이션</li>
+              <li>환자 침대 → 지구 일러스트 연결(지구가 붕대를 감고 있는 컨셉)</li>
+            </ul>
+          </div>
+        </div>
+        <div style="width:220px;min-width:160px;text-align:center;background:#fff;border-radius:10px;padding:8px;border:1px solid #e7f8f0">
+          <!-- placeholder tiny illustration -->
+          <div style="font-size:28px">🛏️➡️🌍</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px">병원 → 지구 연결 이미지</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SOLUTION -->
+    <section class="card" id="solution" role="article" aria-labelledby="solution-title">
+      <h3 id="solution-title">AI 기반 의료폐기물 분류 시스템</h3>
+      <p>
+        AI가 폐기물의 오염 여부를 자동으로 판별하여 감염성 폐기물과 재활용 자원을 즉시 분류합니다. 안전은 유지하고, 환경 부담은 줄입니다.
+      </p>
+
+      <div class="flow" aria-hidden="false">
+        <div class="step">1. 사용 후 분류함에 배출<small>간호사가 규격에 맞게 배출</small></div>
+        <div class="step">2. AI 이미지 스캔<small>오염도 및 물질 판별</small></div>
+        <div class="step">3. 자동 분류 장치 작동<small>감염성 / 재활용</small></div>
+        <div class="step">4. 안전 수거 및 자원 회수<small>환경적 처리</small></div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <strong>핵심 포인트:</strong>
+        <ul style="margin:8px 0 0 18px;color:var(--muted)">
+          <li>간호학의 감염관리 지식을 AI 데이터로 활용하여 정확도 향상</li>
+          <li>분리수거 단계에서 감염 위험 감소</li>
+          <li>재활용률 상승, 소각량 감소</li>
+        </ul>
+      </div>
+
+      <div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:220px">
+          <div style="background:#fff;padding:10px;border-radius:10px;border:1px solid #eaf9f2">
+            <strong>디자인 요소</strong>
+            <div style="color:var(--muted);margin-top:8px">흐름도(사용 → AI 판별 → 분리 → 재활용), 의료용 카메라 + AI 아이콘 조합</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INTERACTIVE -->
+    <section class="card" id="interactive" role="region" aria-labelledby="interactive-title">
+      <h3 id="interactive-title">나도 환경 간호 실천! 직접 분류해보세요 👇</h3>
+      <p>폐기물 아이콘을 드래그하여 '감염성 폐기물' 또는 '재활용 가능'에 넣어보세요. 또는 아래의 'AI 판단 보기' 버튼으로 자동 분류를 실행할 수 있습니다.</p>
+
+      <div class="interaction" aria-live="polite">
+        <div class="panel" aria-label="분류 가능한 아이템">
+          <div style="font-weight:800;margin-bottom:8px">분류할 아이템</div>
+          <div class="items" id="items" role="list">
+            <!-- each item has data-type which represents correct label for simulation -->
+            <div class="card-item" role="listitem" tabindex="0" draggable="true" data-type="infectious" data-id="syringe" aria-grabbed="false">
+              💉<div class="label">주사기</div>
+            </div>
+            <div class="card-item" role="listitem" tabindex="0" draggable="true" data-type="infectious" data-id="ivbag" aria-grabbed="false">
+              🧴<div class="label">수액백</div>
+            </div>
+            <div class="card-item" role="listitem" tabindex="0" draggable="true" data-type="infectious" data-id="mask" aria-grabbed="false">
+              😷<div class="label">마스크</div>
+            </div>
+            <div class="card-item" role="listitem" tabindex="0" draggable="true" data-type="recyclable" data-id="plastictray" aria-grabbed="false">
+              🍽️<div class="label">플라스틱 트레이</div>
+            </div>
+            <div class="card-item" role="listitem" tabindex="0" draggable="true" data-type="recyclable" data-id="metalclip" aria-grabbed="false">
+              📎<div class="label">금속 클립</div>
+            </div>
+            <div class="card-item" role="listitem" tabindex="0" draggable="true" data-type="infectious" data-id="glove" aria-grabbed="false">
+              🧤<div class="label">장갑</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" aria-label="분류 영역">
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div class="dropzone" id="bin-infectious" data-accept="infectious" aria-dropeffect="move" aria-label="감염성 폐기물">
+              <div class="title">감염성 폐기물</div>
+              <div class="hint">밀폐 수거함으로 이동</div>
+              <div class="counter" id="count-infectious">0</div>
+            </div>
+
+            <div class="dropzone" id="bin-recyclable" data-accept="recyclable" aria-dropeffect="move" aria-label="재활용 가능">
+              <div class="title">재활용 가능</div>
+              <div class="hint">자원 회수 루트로</div>
+              <div class="counter" id="count-recyclable">0</div>
+            </div>
+          </div>
+
+          <div class="controls" style="margin-top:12px">
+            <button class="btn" id="auto-classify" aria-controls="result">AI 판단 보기</button>
+            <button class="ghost" id="reset">초기화</button>
+            <div style="flex:1"></div>
+            <div style="font-size:13px;color:var(--muted)">간호사의 분류 지식이 AI의 학습 데이터로 사용됩니다.</div>
+          </div>
+
+          <div class="result" id="result" role="status" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <div class="cta" role="region" aria-label="행동 유도">
+      <div class="text">
+        <h4>작은 실천이 지구를 지킵니다.</h4>
+        <p>환경을 치료하는 간호학, 지금 시작됩니다. 더 많은 사람과 함께할수록 영향력은 커집니다.</p>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <button class="btn" id="pledge">환경 간호 실천 서약하기</button>
+        <button class="ghost" id="donate">후원 참여하기</button>
+      </div>
+    </div>
+
+    <footer style="text-align:center;padding:18px 6px;color:var(--muted);font-size:13px;margin-top:18px">
+      © 2025 간호·환경 AI 프로젝트 — 병원 현장의 안전과 자원순환을 연결합니다.
+    </footer>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal" id="modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="dialog" role="document">
+      <h4 style="margin:0 0 8px 0;color:var(--mint)">AI 분류 결과</h4>
+      <div id="modal-body" style="color:#053532"></div>
+      <div style="text-align:right;margin-top:12px">
+        <button class="close" id="close-modal">닫기</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ---------------------------
+   Helper: count-up animation
+   --------------------------- */
+function animateValue(id, start, end, duration) {
+  const obj = document.getElementById(id);
+  let startTimestamp = null;
+  const step = (timestamp) => {
+    if (!startTimestamp) startTimestamp = timestamp;
+    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+    obj.textContent = Math.floor(progress * (end - start) + start);
+    if (progress < 1) {
+      window.requestAnimationFrame(step);
+    }
+  };
+  window.requestAnimationFrame(step);
+}
+
+/* initialize stats */
+animateValue('stat1', 0, 46, 1100);
+animateValue('stat2', 0, 1200, 1100);
+animateValue('stat3', 0, 28, 1100);
+
+/* ---------------------------
+   Drag & Drop (desktop + touch)
+   - items: .card-item (draggable)
+   - bins: .dropzone (drop target)
+   --------------------------- */
+const itemsContainer = document.getElementById('items');
+let dragged = null;
+
+/* desktop drag events */
+document.querySelectorAll('.card-item').forEach(el => {
+  el.addEventListener('dragstart', (e) => {
+    dragged = el;
+    e.dataTransfer.setData('text/plain', el.dataset.id || '');
+    el.setAttribute('aria-grabbed','true');
+    setTimeout(()=> el.style.visibility = 'hidden', 50);
+  });
+  el.addEventListener('dragend', (e) => {
+    if(el) {
+      el.style.visibility = '';
+      el.setAttribute('aria-grabbed','false');
+      dragged = null;
+    }
+  });
+
+  /* keyboard accessibility: Enter to "pick up" and Space to drop into first bin as convenience */
+  el.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){
+      el.classList.add('keyboard-picked');
+      el.style.transform='scale(0.98)';
+      e.preventDefault();
+    } else if(e.key === ' '){
+      // drop into infectious as default
+      const bin = document.getElementById('bin-infectious');
+      if(bin) simulateDrop(el, bin);
+      e.preventDefault();
+    }
+  });
+});
+
+/* drop events */
+document.querySelectorAll('.dropzone').forEach(bin => {
+  bin.addEventListener('dragover', e => {
+    e.preventDefault();
+    bin.style.borderColor = 'var(--mint)';
+  });
+  bin.addEventListener('dragleave', e => {
+    bin.style.borderColor = '#dff5ec';
+  });
+  bin.addEventListener('drop', e => {
+    e.preventDefault();
+    bin.style.borderColor = '#dff5ec';
+    if(!dragged) return;
+    simulateDrop(dragged, bin);
+  });
+});
+
+/* simulateDrop moves element to bin and updates counts */
+function simulateDrop(el, bin){
+  // clone to show inside bin, remove original from items
+  const clone = el.cloneNode(true);
+  clone.setAttribute('draggable','false');
+  clone.style.cursor='default';
+  clone.style.marginTop = '8px';
+  clone.style.opacity = '0.95';
+  bin.appendChild(clone);
+
+  // update counters
+  const type = el.dataset.type;
+  const cntId = type === 'infectious' ? 'count-infectious' : 'count-recyclable';
+  const elCnt = document.getElementById(cntId);
+  elCnt.textContent = String(Number(elCnt.textContent || 0) + 1);
+
+  // remove original
+  if(el.parentNode) el.parentNode.removeChild(el);
+}
+
+/* Touch support (simple): tap item then tap bin to drop */
+let touchPicked = null;
+itemsContainer.addEventListener('click', (e)=>{
+  const card = e.target.closest('.card-item');
+  if(card){
+    // toggle picked visual
+    if(touchPicked === card){
+      card.style.outline = '';
+      touchPicked = null;
+    } else {
+      if(touchPicked) touchPicked.style.outline = '';
+      touchPicked = card;
+      card.style.outline = '3px solid rgba(10,128,109,0.15)';
+    }
+  }
+});
+document.querySelectorAll('.dropzone').forEach(bin=>{
+  bin.addEventListener('click', ()=> {
+    if(touchPicked){
+      simulateDrop(touchPicked, bin);
+      touchPicked = null;
+    }
+  });
+});
+
+/* ---------------------------
+   AI Auto-classify simulation
+   - remaining items are auto-classified by "AI"
+   - shows modal with summary
+   --------------------------- */
+const autoBtn = document.getElementById('auto-classify');
+const resultBox = document.getElementById('result');
+const modal = document.getElementById('modal');
+const modalBody = document.getElementById('modal-body');
+const closeModalBtn = document.getElementById('close-modal');
+
+autoBtn.addEventListener('click', ()=>{
+  // collect remaining items in itemsContainer
+  const remaining = Array.from(itemsContainer.querySelectorAll('.card-item'));
+  const summary = {infectious:0, recyclable:0, uncertain:0};
+  remaining.forEach(item => {
+    const correct = item.dataset.type || 'uncertain';
+    if(correct === 'infectious' || correct === 'recyclable'){
+      // "AI" moves them correctly with high confidence (simulate)
+      summary[correct]++;
+      const bin = document.querySelector(`[data-accept="${correct}"]`);
+      if(bin) {
+        const copy = item.cloneNode(true);
+        copy.setAttribute('draggable','false');
+        copy.style.marginTop = '8px';
+        bin.appendChild(copy);
+      }
+    } else {
+      summary.uncertain++;
+    }
+    // remove from list
+    if(item.parentNode) item.parentNode.removeChild(item);
+  });
+
+  // update counters
+  const infCnt = Number(document.getElementById('count-infectious').textContent || 0) + summary.infectious;
+  const recCnt = Number(document.getElementById('count-recyclable').textContent || 0) + summary.recyclable;
+  document.getElementById('count-infectious').textContent = String(infCnt);
+  document.getElementById('count-recyclable').textContent = String(recCnt);
+
+  // build message
+  const totalMoved = summary.infectious + summary.recyclable + summary.uncertain;
+  let msg = `<strong>AI가 분류한 항목: ${totalMoved}개</strong><br>`;
+  msg += `감염성: ${summary.infectious}개 / 재활용 가능: ${summary.recyclable}개`;
+  if(summary.uncertain > 0) msg += ` / 불확실: ${summary.uncertain}개 (간호사 검토 필요)`;
+
+  // show in both inline result and modal
+  resultBox.innerHTML = msg;
+  resultBox.style.display = 'block';
+  modalBody.innerHTML = msg + '<p style="color:var(--muted);margin-top:8px;font-size:13px">※ AI는 시뮬레이션입니다. 실제 의료 적용 시 추후 검증 필요.</p>';
+  showModal();
+});
+
+/* Reset */
+document.getElementById('reset').addEventListener('click', ()=>{
+  location.reload(); // simple reset
+});
+
+/* Modal controls */
+function showModal(){ modal.style.display = 'flex'; modal.setAttribute('aria-hidden','false'); }
+function hideModal(){ modal.style.display = 'none'; modal.setAttribute('aria-hidden','true'); }
+closeModalBtn.addEventListener('click', hideModal);
+modal.addEventListener('click', (e)=> { if(e.target === modal) hideModal(); });
+
+/* Pledge + Donate buttons -> show quick dialogs (placeholders) */
+document.getElementById('pledge').addEventListener('click', ()=>{
+  modalBody.innerHTML = '<strong>환경 간호 실천 서약</strong><p style="margin-top:8px;color:var(--muted)">당신은 의료폐기물 분리 실천을 약속합니다. (예시 서약서)</p>';
+  showModal();
+});
+document.getElementById('donate').addEventListener('click', ()=>{
+  modalBody.innerHTML = '<strong>후원 안내</strong><p style="margin-top:8px;color:var(--muted)">후원 방법: 카카오페이/토스/계좌이체 등. (테스트 페이지이므로 실제 결제는 연결되어 있지 않습니다.)</p>';
+  showModal();
+});
+
+/* Accessibility note: ensure keyboard navigation for dynamic elements */
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape') hideModal();
+});
+
+/* End of script */
+</script>
+</body>
+</html>
